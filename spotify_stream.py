@@ -5,9 +5,9 @@ import re
 import yt_dlp
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_groq import ChatGroq
+from langchain_mistralai import ChatMistralAI
 import urllib.parse
-
+import isodate
 
 st.markdown(""" 
     <style>
@@ -173,7 +173,11 @@ def audio_element(song):
 
 
 # Base URL and parameters
-llm = ChatGroq(temperature=0.2, model="llama-3.3-70b-versatile", api_key='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')
+llmx = ChatMistralAI(
+    model="mistral-large-latest",
+    temperature=0.2,
+    api_key="r1u9jBlZye7QrH3ymxkJjAMVd4VLoSEA",
+)
 def get_playlist(link):
     base_url = 'https://api.fabdl.com/spotify/get'
     params = {
@@ -204,7 +208,7 @@ def get_song_url(playlist_id, song_id):
         return False
 
 
-def closest_title_jio(query, titles, llm):
+def closest_title_jio(query, titles, llm=llmx):
     system = f"""
     Given a user search query song name: "{query}" and a list of YouTube video titles:
     {titles},
@@ -238,7 +242,7 @@ def jio_song_data(name: str):
         for i in resp:
             results[f"{i['title']} - {i['description']}"] = i['url']
     try: 
-        link = results[closest_title_jio(name, list(results.keys()), llm)]
+        link = results[closest_title_jio(name, list(results.keys()))]
         song_id = re.findall(r'song/(.*?)/(.*)', link)[0]
         url = f'https://www.jiosaavn.com/api.php?__call=webapi.get&api_version=4&_format=json&_marker=0&ctx=wap6dot0&token={song_id[1]}&type=song'
         resp = r.get(url)
@@ -282,60 +286,58 @@ def closest_title(query, titles, llm):
 
 def get_yt_song(query: str):
     query = query.replace(' ', '+')
-    url = f'https://www.youtube.com/results?search_query={query}'
-    response = r.get(url).text
-    resp = re.findall(r'videoId\":\"(.*?)\"', response)
-    
-    if len(resp) > 0:
-        v_ids = list(dict.fromkeys(resp))[:7]
-        songs = {}
-        for i in v_ids:
-            ydl_opts = {}
-            lnk = f'https://www.youtube.com/watch?v={i}'
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.sanitize_info(ydl.extract_info(lnk,download=False))
-                duration = info['duration']
-                if duration > 60:
-                    songs[info['title']] = i
-        try:
-            yt_id = songs[closest_title(query, list(songs.keys()), llm)]
-            URL = f'https://www.youtube.com/watch?v={yt_id}'
-            ydl_opts = {}
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(URL, download=False)
-                sanitized_info = ydl.sanitize_info(info)['formats']
-                for i in sanitized_info:
-                    if i['resolution'] == "audio only" and "audio_channels" in i:
-                        return i['url']
-        except:
-            st.error('please refresh the page')
-            st.stop()
+    search_url = f'https://www.youtube.com/results?search_query={query}'
+
+    response = r.get(search_url).text
+    video_ids = re.findall(r'videoId\":\"(.*?)\"', response)
+
+    if len(video_ids) > 0:
+        v_ids = list(dict.fromkeys(video_ids))[:7]
+
+        api_key = "AIzaSyCDE6NS0-Ja-RaIJmsMnm-CP_zHThAth8A"
+        api_url = f"https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id={','.join(v_ids)}&key={api_key}"
+
+        api_response = r.get(api_url).json()
+        video_dict = {}
+        if "items" in api_response:
+            for video in api_response["items"]:
+                title = video["snippet"]["title"]
+                duration = video["contentDetails"]["duration"]
+                video_id = video["id"]
+                duration_seconds = isodate.parse_duration(duration).total_seconds()
+                if duration_seconds > 60:
+                    video_dict[title] = video_id
+
+        yt_id = video_dict[closest_title(query, list(video_dict.keys()))]
+        URL = f'https://www.youtube.com/watch?v={yt_id}'
+        ydl_opts = {}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(URL, download=False)
+            sanitized_info = ydl.sanitize_info(info)['formats']
+            for i in sanitized_info:
+                if i['resolution'] == "audio only" and "audio_channels" in i:
+                    return i['url']
 
 def get_search_data(query: str):
-    results = {}
-    url = f"https://www.jiosaavn.com/api.php?__call=autocomplete.get&query={query}&_format=json&_marker=0&ctx=wap6dot0"
-    info = r.get(url)
-    if info.status_code == 200:
-        resp = info.json().get("songs", {}).get("data", [])
-        for i in resp:
-            results[f"{i['title']} - {i['description']}"] = i['url']
-    
     query = query.replace(' ', '+')
-    url = f'https://www.youtube.com/results?search_query={query}'
-    response = r.get(url).text
-    resp = re.findall(r'videoId\":\"(.*?)\"', response)
-    
-    if len(resp) > 0:
-        v_ids = list(dict.fromkeys(resp))[:7]
-        for i in v_ids:
-            ydl_opts = {}
-            lnk = f'https://www.youtube.com/watch?v={i}'
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.sanitize_info(ydl.extract_info(lnk,download=False))
-                duration = info['duration']
-                if duration > 60:
-                    results[info['title']] = i
-    return results
+    search_url = f'https://www.youtube.com/results?search_query={query}'
+    response = r.get(search_url).text
+    video_ids = re.findall(r'videoId\":\"(.*?)\"', response)
+    if len(video_ids) > 0:
+        v_ids = list(dict.fromkeys(video_ids))[:7]
+        api_key = "AIzaSyCDE6NS0-Ja-RaIJmsMnm-CP_zHThAth8A"
+        api_url = f"https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id={','.join(v_ids)}&key={api_key}"
+        api_response = r.get(api_url).json()
+        video_dict = {}
+        if "items" in api_response:
+            for video in api_response["items"]:
+                title = video["snippet"]["title"]
+                duration = video["contentDetails"]["duration"]
+                video_id = video["id"]
+                duration_seconds = isodate.parse_duration(duration).total_seconds()
+                if duration_seconds > 60:
+                    video_dict[title] = video_id
+        return video_dict
 
 def get_search_download(name, results):
     link = results[name]
@@ -379,7 +381,7 @@ if playlist and 'spotify' in playlist:
             st.session_state['songs'] = songs
             st.session_state['playlist_id'] = playlist_id
         except Exception as e:
-            st.error(f"can't fetch made for you playlist.")
+            st.error(f"Failed to fetch made for you playlist please try another playlist.")
 
     if 'songs' in st.session_state and 'playlist_id' in st.session_state:
         selected_song = st.sidebar.radio(":violet[Select a song:]", list(st.session_state.songs.keys()))
