@@ -297,16 +297,19 @@ def get_yt_song(query: str):
                 duration = info['duration']
                 if duration > 60:
                     songs[info['title']] = i
-        
-        yt_id = songs[closest_title(query, list(songs.keys()), llm)]
-        URL = f'https://www.youtube.com/watch?v={yt_id}'
-        ydl_opts = {}
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(URL, download=False)
-            sanitized_info = ydl.sanitize_info(info)['formats']
-            for i in sanitized_info:
-                if i['resolution'] == "audio only" and "audio_channels" in i:
-                    return i['url']
+        try:
+            yt_id = songs[closest_title(query, list(songs.keys()), llm)]
+            URL = f'https://www.youtube.com/watch?v={yt_id}'
+            ydl_opts = {}
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(URL, download=False)
+                sanitized_info = ydl.sanitize_info(info)['formats']
+                for i in sanitized_info:
+                    if i['resolution'] == "audio only" and "audio_channels" in i:
+                        return i['url']
+        except:
+            st.error('please refresh the page')
+            st.stop()
 
 def get_search_data(query: str):
     results = {}
