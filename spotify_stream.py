@@ -319,6 +319,14 @@ def get_yt_song(query: str):
                     return i['url']
 
 def get_search_data(query: str):
+    results = {}
+    url = f"https://www.jiosaavn.com/api.php?__call=autocomplete.get&query={query}&_format=json&_marker=0&ctx=wap6dot0"
+    info = r.get(url)
+    if info.status_code == 200:
+        resp = info.json().get("songs", {}).get("data", [])
+        for i in resp:
+            results[f"{i['title']} - {i['description']}"] = i['url']
+
     query = query.replace(' ', '+')
     search_url = f'https://www.youtube.com/results?search_query={query}'
     response = r.get(search_url).text
@@ -328,7 +336,6 @@ def get_search_data(query: str):
         api_key = "AIzaSyCDE6NS0-Ja-RaIJmsMnm-CP_zHThAth8A"
         api_url = f"https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id={','.join(v_ids)}&key={api_key}"
         api_response = r.get(api_url).json()
-        video_dict = {}
         if "items" in api_response:
             for video in api_response["items"]:
                 title = video["snippet"]["title"]
@@ -336,8 +343,8 @@ def get_search_data(query: str):
                 video_id = video["id"]
                 duration_seconds = isodate.parse_duration(duration).total_seconds()
                 if duration_seconds > 60:
-                    video_dict[title] = video_id
-        return video_dict
+                    results[title] = video_id
+        return results
 
 def get_search_download(name, results):
     link = results[name]
