@@ -1,5 +1,5 @@
 requests==2.32.3
 yt-dlp==2024.12.23
-pytubefix==8.8.3
+isodate==0.7.2
 langchain-core==0.3.28
-langchain-groq==0.2.2
+langchain-mistralai==0.2.4
