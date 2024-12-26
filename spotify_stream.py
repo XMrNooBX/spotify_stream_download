@@ -173,7 +173,7 @@ def audio_element(song):
 
 
 # Base URL and parameters
-llm = ChatGroq(temperature=0.2, model="llama-3.3-70b-versatile", api_key='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')
+llm = ChatGroq(temperature=0.2, model="llama-3.3-70b-versatile", api_key='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')
 def get_playlist(link):
     base_url = 'https://api.fabdl.com/spotify/get'
     params = {
