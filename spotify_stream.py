@@ -331,7 +331,7 @@ def get_search_data(query: str):
                 info = ydl.sanitize_info(ydl.extract_info(lnk,download=False))
                 duration = info['duration']
                 if duration > 60:
-                    songs[info['title']] = i
+                    results[info['title']] = i
     return results
 
 def get_search_download(name, results):
