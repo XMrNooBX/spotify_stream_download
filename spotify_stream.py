@@ -311,12 +311,15 @@ def get_yt_song(query: str):
         yt_id = video_dict[closest_title(query, list(video_dict.keys()))]
         URL = f'https://www.youtube.com/watch?v={yt_id}'
         ydl_opts = {}
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(URL, download=False)
-            sanitized_info = ydl.sanitize_info(info)['formats']
-            for i in sanitized_info:
-                if i['resolution'] == "audio only" and "audio_channels" in i:
-                    return i['url']
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(URL, download=False)
+                sanitized_info = ydl.sanitize_info(info)['formats']
+                for i in sanitized_info:
+                    if i['resolution'] == "audio only" and "audio_channels" in i:
+                        return i['url']
+        except:
+            st.error('Content Unavailable Please try other options')
 
 def get_search_data(query: str):
     results = {}
