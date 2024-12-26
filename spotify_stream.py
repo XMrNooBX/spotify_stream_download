@@ -255,7 +255,7 @@ def jio_song_data(name: str):
         return False
 
 
-def closest_title(query, titles, llm):
+def closest_title(query, titles, llm=llmx):
     system = f"""
     You are tasked with analyzing a list of YouTube video titles to find the most relevant match for a given song query.
     The query: "{query}"
