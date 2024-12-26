@@ -376,7 +376,7 @@ if playlist and 'spotify' in playlist:
             st.session_state['songs'] = songs
             st.session_state['playlist_id'] = playlist_id
         except Exception as e:
-            st.error(f"Failed to fetch playlist: {e}")
+            st.error(f"can't fetch made for you playlist.")
 
     if 'songs' in st.session_state and 'playlist_id' in st.session_state:
         selected_song = st.sidebar.radio(":violet[Select a song:]", list(st.session_state.songs.keys()))
