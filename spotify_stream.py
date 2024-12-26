@@ -3,7 +3,6 @@ from urllib.parse import urlencode
 import streamlit as st
 import re
 import yt_dlp
-from pytubefix import YouTube as yt
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_groq import ChatGroq
@@ -291,11 +290,13 @@ def get_yt_song(query: str):
         v_ids = list(dict.fromkeys(resp))[:7]
         songs = {}
         for i in v_ids:
+            ydl_opts = {}
             lnk = f'https://www.youtube.com/watch?v={i}'
-            video = yt(lnk)
-            video_length = video.length
-            if video_length and int(video_length) > 60:
-                songs[video.title] = i
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.sanitize_info(ydl.extract_info(lnk,download=False))
+                duration = info['duration']
+                if duration > 60:
+                    songs[info['title']] = i
         
         yt_id = songs[closest_title(query, list(songs.keys()), llm)]
         URL = f'https://www.youtube.com/watch?v={yt_id}'
@@ -324,11 +325,13 @@ def get_search_data(query: str):
     if len(resp) > 0:
         v_ids = list(dict.fromkeys(resp))[:7]
         for i in v_ids:
+            ydl_opts = {}
             lnk = f'https://www.youtube.com/watch?v={i}'
-            video = yt(lnk)
-            video_length = video.length
-            if video_length and int(video_length) > 60:
-                results[video.title] = i
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.sanitize_info(ydl.extract_info(lnk,download=False))
+                duration = info['duration']
+                if duration > 60:
+                    songs[info['title']] = i
     return results
 
 def get_search_download(name, results):
@@ -400,8 +403,9 @@ if playlist and 'spotify' in playlist:
 elif playlist and 'spotify' not in playlist:
     if 'search_query' not in st.session_state or st.session_state.search_query != playlist:
         try:
-            st.session_state['search_results'] = get_search_data(playlist)
-            st.session_state['search_query'] = playlist
+            with st.spinner(":green[searching web...]"):
+                st.session_state['search_results'] = get_search_data(playlist)
+                st.session_state['search_query'] = playlist
         except Exception as e:
             st.error(f"Failed to fetch search: {e}")
     
@@ -412,7 +416,8 @@ elif playlist and 'spotify' not in playlist:
         if selected_song in st.session_state['downloaded_songs']:
             song = st.session_state['downloaded_songs'][selected_song]
         else:
-            song = get_search_download(selected_song, st.session_state.search_results)
+            with st.spinner(":green[Getting Your Tunes ready....]"):
+                song = get_search_download(selected_song, st.session_state.search_results)
             if song:
                 # Save the downloaded song URL in global session state
                 st.session_state['downloaded_songs'][selected_song] = song
