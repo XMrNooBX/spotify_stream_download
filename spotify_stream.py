@@ -8,7 +8,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_mistralai import ChatMistralAI
 import urllib.parse
 import isodate
-
+st.set_page_config(page_title="Good Boy", page_icon="🍪")
 st.markdown(""" 
     <style>
     body {
