@@ -443,4 +443,4 @@ elif playlist and 'spotify' not in playlist:
                 st.error('Failed to fetch song URL.')
         if song:
             html_code = audio_element(song)
-            st.components.v1.html(html_code, height=100)
+            st.components.v1.html(html_code, height=150)
