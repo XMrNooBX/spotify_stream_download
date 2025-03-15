@@ -1,6 +1,9 @@
 # Good Boy Vibes 🎶
 
 A fun and vibrant music app that allows you to search for songs or enter a Spotify playlist to discover and play music effortlessly.
+The app is hosted at: <a href="https://good-boy-vibes.streamlit.app/">
+    <img src="https://img.shields.io/badge/Streamlit-Good_Boy_Vibes-red?logo=streamlit" />
+</a>
 
 ## Features 🎧
 
