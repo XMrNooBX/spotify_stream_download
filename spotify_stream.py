@@ -176,7 +176,7 @@ def audio_element(song):
 llmx = ChatMistralAI(
     model="mistral-large-latest",
     temperature=0.2,
-    api_key="r1u9jBlZye7QrH3ymxkJjAMVd4VLoSEA",
+    api_key="93Lhg6PuUPljsmqk2rqDvrUW6yiPdnZl",
 )
 def get_playlist(link):
     base_url = 'https://api.fabdl.com/spotify/get'
