@@ -1,5 +1,5 @@
 requests==2.32.3
-yt-dlp==2024.12.23
+yt-dlp==2025.3.31
 isodate==0.7.2
-langchain-core==0.3.28
-langchain-mistralai==0.2.4
+langchain-core==0.3.49
+langchain-mistralai==0.2.10
